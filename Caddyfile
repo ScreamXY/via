@@ -1,0 +1,13 @@
+{
+    admin off
+    auto_https off
+}
+:8080 {
+    root * /srv
+    header Cache-Control "no-cache"
+    header X-Content-Type-Options "nosniff"
+    header X-Frame-Options "DENY"
+    @routes path /test /design /console /settings /debug /errors
+    rewrite @routes /index.html
+    file_server
+}

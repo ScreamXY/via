@@ -25,6 +25,22 @@ npm run preview  # serve the production build locally
 
 Host the contents of `dist/` at the root of an HTTPS origin. VIA currently uses absolute paths for its definition database; hosting under a repository subpath requires further changes. WebHID needs a supported browser and HTTPS or localhost.
 
+## Internal hosting
+
+`make publish` builds and tests the committed source, then publishes amd64 and
+arm64 images to `ghcr.io/screamxy/via` with `latest`, a commit tag and revision
+label. Docker uses the existing GHCR credential helper.
+
+The runtime serves port 8080 as UID 1000 with a read-only root and writable
+`/data` and `/config` tmpfs directories. Client routes are rewritten to the app;
+missing assets and definitions return 404. Keyboard definitions are built into
+the image, and no keyboard devices need to be attached to the server.
+
+[ScreamXY/internal-apps](https://github.com/ScreamXY/internal-apps) owns Compose
+and the portal link at <https://scream-server.story-ling.ts.net:10443/>.
+Tailscale Serve provides HTTPS on the personal tailnet. Connect the keyboard
+to the computer running Chrome or Edge and authorize it on this origin.
+
 ## Bundled keyboards
 
 | Keyboard                           | VID:PID     | Definition source               |
