@@ -45,13 +45,13 @@ import {getRenderMode, getSelectedTheme} from 'src/store/settingsSlice';
 import {useTranslation} from 'react-i18next';
 
 const MenuContainer = styled.div`
-  padding: 15px 10px 20px 10px;
+  padding: 20px 10px;
 `;
 
 const BadgeRow = styled.div`
   position: absolute;
-  top: 0;
-  right: 15px;
+  top: 12px;
+  right: 20px;
 
   display: flex;
   flex-direction: row;
@@ -122,9 +122,9 @@ const filterInferredRows = (
   let removeList: typeof Rows = [];
 
   // LAYOUTS IS INFERRED, filter out if doesn't exist
-  if (
-    !(layouts.optionKeys && Object.entries(layouts.optionKeys).length !== 0)
-  ) {
+  if (!(
+    layouts.optionKeys && Object.entries(layouts.optionKeys).length !== 0
+  )) {
     removeList = [...removeList, Layouts];
   }
 
@@ -295,6 +295,22 @@ const ConfigureGrid = () => {
             {(KeyboardRows || []).map(
               ({Icon, Title}: {Icon: any; Title: string}, idx: number) => (
                 <Row
+                  as="button"
+                  title={t(Title)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background:
+                      selectedRow === idx
+                        ? 'var(--ui-accent-soft)'
+                        : 'transparent',
+                    border: 0,
+                    borderRadius: 10,
+                    padding: 10,
+                    width: '100%',
+                    fontFamily: 'inherit',
+                  }}
                   key={idx}
                   onClick={(_) => setRow(idx)}
                   $selected={selectedRow === idx}
@@ -303,6 +319,7 @@ const ConfigureGrid = () => {
                     <Icon />
                     <MenuTooltip>{t(Title)}</MenuTooltip>
                   </IconContainer>
+                  <span className="workspace-nav-label">{t(Title)}</span>
                 </Row>
               ),
             )}

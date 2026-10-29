@@ -20,7 +20,7 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps<React.MouseEvent>> = (
     () => calculateKeyboardFrameDimensions(otherProps.keys),
     [otherProps.keys],
   );
-  const containerHeight = containerDimensions.height;
+  const containerHeight = Math.max(120, containerDimensions.height - 64);
   const minPadding = 35;
   const ratio =
     Math.min(
@@ -41,7 +41,7 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps<React.MouseEvent>> = (
   return (
     <div
       style={{
-        transform: `scale(${ratio}, ${ratio})`,
+        transform: `translateY(24px) scale(${ratio}, ${ratio})`,
         opacity: shouldHide ? 0 : 1,
         position: 'absolute',
         pointerEvents: shouldHide ? 'none' : 'all',

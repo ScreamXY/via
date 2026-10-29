@@ -6,6 +6,7 @@ export const Pane = styled.div`
   flex: 1;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
   background: var(--gradient);
 `;

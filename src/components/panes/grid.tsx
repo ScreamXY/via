@@ -6,6 +6,8 @@ export const Grid = styled.div`
   width: 100%;
   display: grid;
   grid-template-columns: min-content min-content minmax(0, 1fr);
+  min-height: 0;
+  background: var(--ui-canvas);
 
   > div {
     pointer-events: all;
@@ -53,7 +55,10 @@ export const SubmenuCell = styled(Cell)`
 `;
 
 export const SubmenuOverflowCell = styled(SubmenuCell)`
-  min-width: 80px;
+  width: 160px;
+  @media (max-width: 800px) {
+    width: 116px;
+  }
   overflow: auto;
   overflow-x: hidden; /* Override just the horizontal part */
 `;
@@ -69,12 +74,12 @@ export const SinglePaneFlexCell = styled(Cell)`
 
 export const ConfigureFlexCell = styled(SinglePaneFlexCell)`
   pointer-events: none;
-  height: 500px;
+  height: var(--keyboard-stage-height);
 `;
 
 export const CategoryIconContainer = styled.span<{$selected?: boolean}>`
   position: relative;
-  color: var(--color_inside-accent);
+  color: var(--color_label);
   height: 35px;
   cursor: pointer;
   display: flex;
@@ -117,7 +122,9 @@ export const ControlRow = styled.div`
   width: 100%;
   max-width: 960px;
   border-bottom: 1px solid var(--border_color_cell);
-  font-size: 20px;
+  font-size: 15px;
+  gap: 20px;
+  flex-wrap: wrap;
   justify-content: space-between;
   display: flex;
   line-height: 50px;
@@ -151,10 +158,10 @@ export const Detail = styled.span`
 export const Row = styled.div<{$selected: boolean}>`
   cursor: pointer;
   white-space: nowrap;
-  margin-bottom: 15px;
-  font-size: 20px;
+  margin-bottom: 8px;
+  font-size: 14px;
   line-height: 20px;
-  text-transform: uppercase;
+  text-transform: none;
   color: ${(props) => getIconColor(props.$selected).style.color};
   border-left: 2px solid transparent;
 
@@ -179,13 +186,15 @@ export const Row = styled.div<{$selected: boolean}>`
 `;
 
 export const SubmenuRow = styled(Row)`
-  background: ${(props) => (props.$selected ? 'var(--bg_icon)' : 'inherit')};
-  padding: 4px 8px;
+  background: ${(props) => (props.$selected ? 'var(--ui-accent-soft)' : 'transparent')};
+  padding: 10px 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-weight: 400;
   min-width: min-content;
   border-color: transparent;
-  margin-bottom: 11px;
+  margin-bottom: 4px;
   color: ${(props) =>
     props.$selected ? 'var(--color_label-highlighted)' : 'var(--color_label)'};
-  border-radius: 12px;
+  border-radius: 8px;
 `;

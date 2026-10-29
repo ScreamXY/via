@@ -34,16 +34,16 @@ export const ComboKeycap = (props: any) => {
           $selected={props.selected}
           onClick={onClick}
           onPointerDown={onPointerDown}
-          onPointerOver={onPointerOver}
-          onPointerOut={onPointerOut}
+          onPointerEnter={onPointerOver}
+          onPointerLeave={onPointerOut}
           style={{
             cursor: !disabled ? 'pointer' : 'initial',
             position: 'relative',
             animation: props.disabled
               ? 'initial' // This prevents the hover animation from firing when the keycap can't be interacted with
               : props.selected
-              ? '.75s infinite alternate select-glow'
-              : '',
+                ? '.75s infinite alternate select-glow'
+                : '',
             transform: `translateX(${
               (-Math.abs(r1[0] - r2[0]) * CSSVarObject.keyXPos) / 2
             }px) perspective(100px) translateZ(${props.keycapZ}px)`,
@@ -191,7 +191,6 @@ const ComboKeyBoundingContainer = styled.div<{$selected: boolean}>`
   animation: ${(p) =>
     p.$selected ? '.75s infinite alternate select-glow' : 'initial'};
   &:hover {
-    transform: perspective(100px) translateZ(-5px);
     animation: 0.5s 1 forwards select-glow;
   }
 `;
@@ -199,7 +198,8 @@ const ComboKeyBoundingContainer = styled.div<{$selected: boolean}>`
 const ComboKeyRectContainer = styled.div<{}>`
   box-sizing: border-box;
   padding: 2px 6px 10px 6px;
-  box-shadow: inset -1px -1px 0 rgb(0 0 0 / 20%),
+  box-shadow:
+    inset -1px -1px 0 rgb(0 0 0 / 20%),
     inset 1px 1px 0 rgb(255 255 255 / 20%);
 `;
 const ComboKeyBGContainer = styled.div<{}>`

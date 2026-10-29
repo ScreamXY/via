@@ -17,7 +17,6 @@ import {
   getDesignDefinitionVersion,
   getSelectedTheme,
 } from 'src/store/settingsSlice';
-import {getDarkenedColor} from 'src/utils/color-math';
 import {OVERRIDE_HID_CHECK} from 'src/utils/override';
 import {useSize} from 'src/utils/use-size';
 import styled from 'styled-components';
@@ -36,10 +35,13 @@ const KeyboardBG = styled.div<{
   right: 0;
   bottom: 0;
   left: 0;
-  background: ${(props) =>
-    `linear-gradient(30deg, rgba(150,150,150,1) 10%,${getDarkenedColor(
-      props.$color,
-    )} 50%, rgba(150,150,150,1) 90%)`};
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    var(--ui-raised),
+    var(--ui-canvas) 75%
+  );
+  border-bottom: 1px solid var(--border_color_cell);
+
   opacity: ${(props) => (props.$visible ? 1 : 0)};
 `;
 
@@ -104,15 +106,16 @@ export const CanvasRouter = () => {
     <>
       <div
         style={{
-          height: 500,
+          height: 'var(--keyboard-stage-height)',
+          flexShrink: 0,
           width: '100%',
           top: 0,
           transform: hideCanvasScene
             ? !hideTerrainBG
-              ? 'translateY(-500px)'
+              ? 'translateY(calc(-1 * var(--keyboard-stage-height)))'
               : !dimensions
-              ? ''
-              : `translateY(${-300 + dimensions!.height / 2}px)`
+                ? ''
+                : `translateY(${-300 + dimensions!.height / 2}px)`
             : '',
           position: hideCanvasScene && !hideTerrainBG ? 'absolute' : 'relative',
           overflow: 'visible',

@@ -1,65 +1,63 @@
-# [VIA Web Application](https://usevia.app) - Your keyboards best friend
+# Keyspace — personal VIA
 
-![android-chrome-192x192](https://user-images.githubusercontent.com/1714072/222621960-ddfb8ee6-a486-4c66-8852-b204ba7c807b.png)
+A local customization of [the VIA web app](https://github.com/the-via/app), with bundled keyboard definitions and a macOS key category. The upstream GPL-3.0 license is retained in [LICENSE](LICENSE).
 
-[![Azure Static Web Apps CI/CD](https://github.com/the-via/app/actions/workflows/azure.yml/badge.svg)](https://github.com/the-via/app/actions/workflows/azure.yml)
+## Workspace design
 
-VIA is a powerful, open-source web-based interface for configuring your [QMK](https://qmk.fm)-powered mechanical keyboard. It allows you to customize your keymaps, create macros, and adjust RGB settings (if it has RGB) on the fly, without needing to recompile your keyboard's firmware. This makes keyboard customization easier and more accessible for everyone.
+Graphite and mint surfaces, system typography, labeled navigation and light/dark modes frame the keyboard preview. The preview scales with window height. The key library uses wrapping cards for names, QMK codes and descriptions; no fixed-height text clipping or ellipsis is used in these cards. Keyboard keycap themes remain independently selectable.
 
-## Getting VIA to support your keyboard
+The custom-keycode dialog, search field, layer controls and device selectors follow the same visual style. UI-only browser fixtures in `tests/ui-design.playwright.js` and `tests/ui-search.playwright.js` check responsive card bounds and search/dialog behavior without physical keyboard writes.
 
-Are you a keyboard maker or a developer interested in adding support for your keyboard? We welcome contributions to the VIA project!
+## Run
 
-1. The source code of the keyboard **has to be merged** in [QMK Firmware Repositories](https://github.com/qmk/qmk_firmware) Master branch.
-2. Your `keymaps/via` keymap **has to be merged** in [VIA's QMK Userspace Repository](https://github.com/the-via/qmk_userspace_via) Main branch.
-3. Create a definition in JSON format for your keyboard and submit it as a pull request to [VIA's Keyboards Repository](https://github.com/the-via/keyboards) Master branch.
-
-Please follow our [Specification documentation](https://www.caniusevia.com/docs/specification) carefully to ensure your pull request is smoothly reviewed and merged.
-
-## Local development setup
-
-Start by cloning [`the-via/keyboards`](github.com/the-via/keyboards) then install dependencies with `npm install` and finally `npm run build`. You should see
-the output folder `dist`. This should be copied or symlinked to our repo's `public/definitions` folder.
-
-```bash
-# Inside the-via/app
-public/definitions -> ../../keyboards/dist
+```sh
+npm ci
+npm run dev
 ```
 
-### Useful commands
+Open http://localhost:5173 in Chrome or Edge, connect the keyboard by USB, and authorize it. The bundled keyboards do not require a Design-tab import. Browser authorization is still required for each site origin.
 
-#### `npm run dev`
+```sh
+npm run build  # production files in dist/
+npm test      # run after building the definitions
+npm run preview  # serve the production build locally
+```
 
-Runs the app in the development mode.
-Open [http://localhost:5173](http://localhost:5173) to view it in the browser.
+Host the contents of `dist/` at the root of an HTTPS origin. VIA currently uses absolute paths for its definition database; hosting under a repository subpath requires further changes. WebHID needs a supported browser and HTTPS or localhost.
 
-The page will reload if you make edits.
-You will also see any lint errors in the console.
+## Bundled keyboards
 
-#### `npm run build`
+| Keyboard                           | VID:PID     | Definition source               |
+| ---------------------------------- | ----------- | ------------------------------- |
+| Royal Kludge R75 Wired             | `342D:E484` | `R75 Wired Windows QMK.json`    |
+| Royal Kludge R75 Wireless / R75Pro | `342D:E487` | `R75 Wireless Windows QMK.json` |
+| Keychron V1 ANSI Knob              | `3434:0311` | `US Knob v1.7.json.zip`         |
+| Keychron V1 ISO Knob               | `3434:0313` | `ISO Knob v1.3.json.zip`        |
 
-Builds a static copy of your site to the `build/` folder.
-Your app is ready to be deployed!
+The original definition files are copied unchanged into `keyboards/v3/` from the owner's keyboard collection. The Windows filenames identify the vendor downloads; these are keyboard definitions usable by the browser on macOS too. Saved `*.layout.json` keymaps are not definitions and are not automatically applied.
 
-#### `npm run test`
+The R75 wireless definition includes a selectable knob layout. Choose the appropriate layout in VIA if needed. The Dragonborn K630 folder supplied no VIA definition; this fork does not add support for its vendor-specific protocol.
 
-Launches the application test runner.
-Run with the `--watch` flag (`npm test -- --watch`) to run in interactive watch mode.
+To bundle another keyboard, put its manufacturer definition in `keyboards/v3/` (or `keyboards/v2/` for an older definition) and rebuild. The build validates definitions using VIA's reader, overlays matching IDs in the upstream database, and updates the cache hash. Invalid definitions and duplicate local IDs fail the build. Every build starts with a fresh generated database, so removed definitions cannot remain accidentally bundled.
 
----
+## macOS keys
 
-This project is tested with [BrowserStack](https://www.browserstack.com/).
+The **macOS** category includes native Mission Control and Launchpad keycodes, screen brightness, media controls, Command and Option, plus shortcut presets for Spotlight, App Exposé, desktop switching, screenshots, Lock Screen, Force Quit, emoji and editing.
 
-## Looking for an offline app?
+Native consumer keys need keyboard firmware and OS support. Shortcut presets use standard macOS bindings and can differ if System Settings or an app overrides them. Mission Control also has a Control-Up shortcut preset. Adding a key to VIA's UI does not add firmware capabilities or restore OS features removed by Apple.
 
-@cebby2420 has kindly made a desktop app that does so.
+References: [QMK basic keycodes](https://docs.qmk.fm/keycodes_basic), [Apple keyboard shortcuts](https://support.apple.com/en-us/102650).
 
-You can find it at [https://github.com/cebby2420/via-desktop](https://github.com/cebby2420/via-desktop).
+## Search and modifier keys
 
-**NOTE: This project has no official affiliation with VIA, and we cannot provide support for it.**
+Search above the key palette filters across all enabled categories, including custom keys. Names, descriptions, QMK codes, modifier symbols and aliases such as `cmd`, `option`, `screen +` and `KC_HYPR` are matched; exact matches rank first. Clear the search or choose a category to return to browsing.
 
-## Facing Issues?
+The **Any** dialog uses the same search. Type `hyper` or `meh` to resolve the hold-only modifier, or select a tap/hold or one-shot variant with the arrow keys and Enter. The dialog shows the resolved QMK expression and hex value before confirmation. Partial or ambiguous names require selecting a result.
 
-If you encounter any issues or bugs while using the [VIA web application](https://usevia.app), please report them by opening an issue in the [Issues section](https://github.com/the-via/app/issues). This will help us to track down and resolve problems, and improve the VIA experience for everyone.
+**Modifiers** includes Hyper, Meh, tap-Escape/hold-Hyper, tap-Escape/hold-Meh, Control/Escape, Shift/Enter and one-shot modifiers. These use the encodings documented in [QMK's modifier reference](https://docs.qmk.fm/feature_advanced_keycodes), [Mod-Tap](https://docs.qmk.fm/mod_tap) and [One Shot Keys](https://docs.qmk.fm/one_shot_keys). Timing and one-shot behavior depend on firmware settings.
 
-Before reporting, please make sure to check if an issue has already been reported. Thank you!
+The macOS category also includes app switching, full screen, hide/minimize/close/quit, find/save, word navigation/deletion and line navigation. **Brightness − (F14)** and **Brightness + (F15)** are alternatives confirmed working by the owner on their Mac. The standard consumer brightness codes remain available; their reported failure has not been diagnosed at the firmware/OS/display level.
+
+## Validation
+
+Production build and focused tests cover definition conversion, both R75 IDs, encoder layout preservation, cache invalidation, invalid/duplicate definitions, category visibility and keycode encoding across VIA protocol dictionaries. USB connection, writes and macOS behavior on physical keyboards still need manual verification.

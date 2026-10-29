@@ -124,15 +124,16 @@ export const NonSuspenseCanvasRouter = () => {
     <>
       <div
         style={{
-          height: 500,
+          height: 'var(--keyboard-stage-height)',
+          flexShrink: 0,
           width: '100%',
           top: 0,
           transform: hideCanvasScene
             ? !hideTerrainBG
-              ? 'translateY(-500px)'
+              ? 'translateY(calc(-1 * var(--keyboard-stage-height)))'
               : !dimensions
-              ? ''
-              : `translateY(${-300 + dimensions!.height / 2}px)`
+                ? ''
+                : `translateY(${-300 + dimensions!.height / 2}px)`
             : '',
           position: hideCanvasScene && !hideTerrainBG ? 'absolute' : 'relative',
           overflow: 'visible',

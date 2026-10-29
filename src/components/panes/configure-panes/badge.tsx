@@ -24,7 +24,7 @@ import {
 
 const Container = styled.div`
   position: relative;
-  font-size: 18px;
+  font-size: 12px;
   pointer-events: none;
   font-weight: 400;
   flex: 0 0 auto;
@@ -33,15 +33,14 @@ const Container = styled.div`
 const KeyboardTitle = styled.label`
   pointer-events: all;
   display: inline-block;
-  background: var(--color_accent);
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-  font-size: 18px;
-  text-transform: uppercase;
-  color: var(--color_inside-accent);
-  padding: 1px 10px;
+  background: var(--ui-surface);
+  border-radius: 8px;
+  font-size: 12px;
+  text-transform: none;
+  color: var(--color_label-highlighted);
+  padding: 8px 12px;
   border: solid 1px var(--bg_control);
-  border-top: none;
+
   cursor: pointer;
   transition: all 0.1s ease-out;
   white-space: nowrap;
@@ -87,7 +86,7 @@ const KeyboardButton = styled.button<{$selected?: boolean}>`
   cursor: pointer;
   text-align: left;
   font-size: 14px;
-  text-transform: uppercase;
+  text-transform: none;
   padding: 5px 10px;
 
   &:hover {

@@ -1,10 +1,3 @@
-/* This is a workaround to ← → missing in Google Fonts web font.
-Explicitly import the missing arrows.
-See https://stackoverflow.com/questions/40822458/styled-unicode-arrows-not-showing-up-with-google-fonts-web-font
- */
-@import url('https://fonts.googleapis.com/css?family=Fira+Sans');
-@import url('https://fonts.googleapis.com/css?family=Fira+Sans&text=%E2%86%90|%E2%86%92');
-
 html,
 body {
   height: 100%;
@@ -17,16 +10,16 @@ body {
   position: relative;
   color: white;
   background-color: #232c39;
-  font-family: 'Fira Sans', Helvetica, Helvetica Neue, Arial, serif;
-  font-weight: 300;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 400;
   overflow: hidden;
   margin: 0;
   padding: 0;
   user-select: none;
 }
 button {
-  font-family: 'Fira Sans', Helvetica, Helvetica Neue, Arial, serif;
-  font-weight: 300;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 400;
 }
 h2 {
   margin: 0;
@@ -36,7 +29,7 @@ h2 {
   color: #fff;
 }
 p {
-  font-size: 24px;
+  font-size: 14px;
 }
 li {
   list-style: none;
@@ -63,10 +56,9 @@ a:hover {
   --color_tinge: #c7c3c3;
   --color_tinge-light: #ebe4e4;
   --color_tinge-dark: #796c6c;
-  --box-shadow-keycap: inset -1px -1px 0 rgb(0 0 0 / 20%),
-    inset 1px 1px 0 rgb(255 255 255 / 20%);
+  --box-shadow-keycap:
+    inset -1px -1px 0 rgb(0 0 0 / 20%), inset 1px 1px 0 rgb(255 255 255 / 20%);
   --box-shadow-keyboard: var(--box-shadow-keycap);
-
 }
 
 html[data-theme-mode='dark'] {
@@ -141,10 +133,10 @@ html[data-theme-mode='light'] {
 }
 @keyframes roll {
   0% {
-    transform:  translate3d(-50px, 0px, 0) rotate(-30deg);
+    transform: translate3d(-50px, 0px, 0) rotate(-30deg);
   }
   100% {
-    transform:   translate3d(50px, 0px, 0) rotate(30deg);
+    transform: translate3d(50px, 0px, 0) rotate(30deg);
   }
 }
 @keyframes text-glow {
@@ -165,5 +157,92 @@ html[data-theme-mode='light'] {
   }
   100% {
     filter: brightness(1.25);
+  }
+}
+
+/* Workspace surfaces are independent from the keyboard's keycap theme. */
+:root {
+  --keyboard-stage-height: clamp(240px, 42vh, 420px);
+  --ui-accent: #78e0c2;
+  --ui-accent-ink: #102a23;
+  --ui-accent-soft: #203d35;
+  --ui-canvas: #101718;
+  --ui-surface: #182122;
+  --ui-raised: #202c2d;
+}
+html[data-theme-mode='dark'] {
+  color-scheme: dark;
+  --color_label: #a8b9b7;
+  --color_label-highlighted: #edf5f2;
+  --border_color_cell: #2a3839;
+  --border_color_icon: #3b5151;
+  --bg_menu: #151e1f;
+  --bg_control: #202c2d;
+  --bg_outside-accent: #182122;
+  --bg_control-highlighted: #304340;
+  --bg_icon: #24433a;
+  --bg_gradient: #101718;
+  --color_control: #9bafab;
+}
+html[data-theme-mode='light'] {
+  color-scheme: light;
+  --ui-accent: #146c53;
+  --ui-accent-ink: #ffffff;
+  --ui-accent-soft: #e0f1e9;
+  --ui-canvas: #f0f4f2;
+  --ui-surface: #ffffff;
+  --ui-raised: #f6f9f7;
+  --color_label: #536b62;
+  --color_label-highlighted: #182c24;
+  --border_color_cell: #d6e2dc;
+  --border_color_icon: #a7bcb1;
+  --bg_menu: #f6f9f7;
+  --bg_control: #e8efeb;
+  --bg_outside-accent: #ffffff;
+  --bg_icon: #d9eee4;
+  --bg_gradient: #f0f4f2;
+  --color_control: #536b62;
+}
+body {
+  background: var(--ui-canvas);
+  -webkit-font-smoothing: antialiased;
+}
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--ui-accent);
+  outline-offset: 3px;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border_color_icon) transparent;
+}
+::selection {
+  background: var(--ui-accent-soft);
+  color: var(--color_label-highlighted);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.workspace-nav-label {
+  font-size: 12px;
+}
+@media (max-width: 1100px) {
+  .workspace-nav-label {
+    display: none;
   }
 }

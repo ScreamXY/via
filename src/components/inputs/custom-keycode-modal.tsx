@@ -1,14 +1,16 @@
-import {useState} from 'react';
+import {useMemo, useState} from 'react';
+import {
+  searchKeycodes,
+  resolveKeycodeInput,
+  withKeycodeAliases,
+} from '../../utils/keycode-search';
 import styled from 'styled-components';
 import {AccentButton, PrimaryAccentButton} from './accent-button';
 import {AutocompleteItem} from './autocomplete-keycode';
-import {
-  anyKeycodeToString,
-  advancedStringToKeycode,
-} from '../../utils/advanced-keys';
+import {anyKeycodeToString} from '../../utils/advanced-keys';
 import {useCombobox} from 'downshift';
 import TextInput from './text-input';
-import {getKeycodesForKeyboard, IKeycode} from '../../utils/key';
+import {getKeycodesForKeyboard} from '../../utils/key';
 import {useAppSelector} from 'src/store/hooks';
 import {
   getBasicKeyToByte,
@@ -24,15 +26,17 @@ import {
 import {useTranslation} from 'react-i18next';
 
 const AutocompleteContainer = styled.ul`
-  position: fixed;
+  position: relative;
   background-color: var(--bg_menu);
-  max-height: 210px;
+  max-height: min(320px, 40vh);
+  border-radius: 12px;
   overflow: auto;
   border: 1px solid var(--bg_control);
   margin: 0;
   padding: 0;
-  width: auto;
-  margin-top: -24px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0;
   line-height: normal;
 `;
 
@@ -49,103 +53,40 @@ type KeycodeModalProps = {
   onConfirm: (keycode: number) => void;
 };
 
-function isHex(input: string): boolean {
-  const lowercased = input.toLowerCase();
-  const parsed = parseInt(lowercased, 16);
-  return `0x${parsed.toString(16).toLowerCase()}` === lowercased;
-}
-
-// This is hella basic 💁‍♀️💁‍♂️
-function inputIsBasicByte(
-  input: string,
-  basicKeyToByte: Record<string, number>,
-): boolean {
-  const keyCode = input.trim().toUpperCase();
-  return keyCode in basicKeyToByte;
-}
-
-function basicByteFromInput(
-  input: string,
-  basicKeyToByte: Record<string, number>,
-): number {
-  const keyCode = input.trim().toUpperCase();
-  return basicKeyToByte[keyCode];
-}
-
-function inputIsAdvancedKeyCode(
-  input: string,
-  basicKeyToByte: Record<string, number>,
-): boolean {
-  const keyCode = input.trim().toUpperCase();
-  return advancedStringToKeycode(keyCode, basicKeyToByte) !== 0;
-}
-
-function advancedKeyCodeFromInput(
-  input: string,
-  basicKeyToByte: Record<string, number>,
-): number {
-  const keyCode = input.trim().toUpperCase();
-  return advancedStringToKeycode(keyCode, basicKeyToByte);
-}
-
-function inputIsHex(input: string): boolean {
-  return isHex(input.trim());
-}
-
-function hexFromInput(input: string): number {
-  const lowercased = input.toLowerCase();
-  return parseInt(lowercased, 16);
-}
-
-function inputIsValid(
-  input: string,
-  basicKeyToByte: Record<string, number>,
-): boolean {
-  return (
-    inputIsBasicByte(input, basicKeyToByte) ||
-    inputIsAdvancedKeyCode(input, basicKeyToByte) ||
-    inputIsHex(input)
-  );
-}
-
-function keycodeFromInput(
-  input: string,
-  basicKeyToByte: Record<string, number>,
-): number | null {
-  if (inputIsBasicByte(input, basicKeyToByte)) {
-    return basicByteFromInput(input, basicKeyToByte);
-  }
-
-  if (inputIsAdvancedKeyCode(input, basicKeyToByte)) {
-    return advancedKeyCodeFromInput(input, basicKeyToByte);
-  }
-
-  if (inputIsHex(input)) {
-    return hexFromInput(input);
-  }
-
-  return null;
-}
-
-const getInputItems = (arr: IKeycode[]) =>
-  arr.map((k) => ({
-    code: k.code,
-    label: k.title ?? k.name,
-  }));
-
 // Connect component with redux here:
 export const KeycodeModal: React.FC<KeycodeModalProps> = (props) => {
   const {t} = useTranslation();
   const selectedDefinition = useAppSelector(getSelectedDefinition);
   const selectedDevice = useAppSelector(getSelectedConnectedDevice);
   const {basicKeyToByte, byteToKey} = useAppSelector(getBasicKeyToByte);
-  if (!selectedDefinition || !selectedDevice) {
-    return null;
-  }
-  const supportedInputItems = getInputItems(
-    getKeycodesForKeyboard(selectedDefinition, selectedDevice.protocol),
+  const supportedInputItems = useMemo(
+    () =>
+      withKeycodeAliases(
+        selectedDefinition && selectedDevice
+          ? [
+              ...getKeycodesForKeyboard(
+                selectedDefinition,
+                selectedDevice.protocol,
+              ),
+              ...(selectedDefinition.customKeycodes || []).map(
+                (key, index) => ({...key, code: `CUSTOM(${index})`}),
+              ),
+            ]
+          : [],
+        basicKeyToByte,
+      ),
+    [selectedDefinition, selectedDevice, basicKeyToByte],
   );
-  const [inputItems, setInputItems] = useState(supportedInputItems);
+  const [query, setQuery] = useState('');
+  const inputItems = searchKeycodes(supportedInputItems, query)
+    .filter(
+      (item) => resolveKeycodeInput(item.code, basicKeyToByte, []) !== null,
+    )
+    .slice(0, 40)
+    .map((item) => ({
+      ...item,
+      label: item.title ? `${item.name} — ${item.title}` : item.name,
+    }));
   const defaultInput = anyKeycodeToString(
     props.defaultValue as number,
     basicKeyToByte,
@@ -165,30 +106,33 @@ export const KeycodeModal: React.FC<KeycodeModalProps> = (props) => {
     defaultInputValue: defaultInput,
     itemToString: (item) => item?.code ?? '',
     onInputValueChange: ({inputValue}) => {
-      setInputItems(
-        supportedInputItems.filter(({label, code}) =>
-          [label, code]
-            .flatMap((s) => s.split(/\s+/))
-            .map((s) => s.toLowerCase())
-            .some((s) => s.startsWith((inputValue ?? '').toLowerCase())),
-        ),
-      );
+      setQuery(inputValue ?? '');
     },
   });
 
-  const isValid = inputIsValid(inputValue, basicKeyToByte);
+  const resolved = resolveKeycodeInput(
+    inputValue,
+    basicKeyToByte,
+    supportedInputItems,
+  );
+  if (!selectedDefinition || !selectedDevice) {
+    return null;
+  }
   return (
     <ModalBackground>
-      <ModalContainer>
-        <PromptText>
-          {t('Please enter your desired QMK keycode or hex code:')}
-        </PromptText>
-        <div>
+      <ModalContainer
+        role="dialog"
+        aria-label="Choose a keycode"
+        aria-modal="true"
+      >
+        <PromptText>Choose a command</PromptText>
+        <div style={{width: 'min(640px, calc(100vw - 100px))'}}>
           <div>
             <TextInput
-              {...getInputProps()}
+              {...getInputProps({'aria-label': 'Keycode, name or alias'})}
               type="text"
-              placeholder={defaultInput || 'KC_NO, 0xFF, etc.'}
+              placeholder="Search: hyper, meh, command, screenshot, KC_A…"
+              style={{width: '100%', boxSizing: 'border-box', marginBottom: 8}}
             />
           </div>
           <AutocompleteContainer
@@ -212,14 +156,25 @@ export const KeycodeModal: React.FC<KeycodeModalProps> = (props) => {
               ))}
           </AutocompleteContainer>
         </div>
+        <div
+          style={{color: 'var(--color_label)', maxWidth: 640}}
+          aria-live="polite"
+        >
+          {resolved
+            ? `Selected: ${resolved.code} · 0x${resolved.value.toString(16).padStart(4, '0')}`
+            : 'Type a name, alias, QMK expression or hex code; choose a suggestion with ↑/↓ and Enter.'}
+          {query && inputItems.length === 0 && !resolved && (
+            <div>No matching keycodes.</div>
+          )}
+        </div>
         <RowDiv>
           <AccentButton onClick={props.onExit}>{t('Cancel')}</AccentButton>
           <PrimaryAccentButton
-            disabled={!isValid}
+            disabled={!resolved}
             onClick={() => {
-              props.onConfirm(
-                keycodeFromInput(inputValue as any, basicKeyToByte) as any,
-              );
+              if (resolved) {
+                props.onConfirm(resolved.value);
+              }
             }}
           >
             {t('Confirm')}

@@ -1,3 +1,5 @@
+import {modifierKeycodes} from './modifier-keycodes';
+import {macOSKeycodes} from './macos-keycodes';
 import {
   advancedKeycodeToString,
   advancedStringToKeycode,
@@ -13,6 +15,7 @@ import {
 export interface IKeycode {
   name: string;
   code: string;
+  aliases?: string[];
   title?: string;
   shortName?: string;
   keys?: string;
@@ -135,7 +138,7 @@ export function getByteForCode(
     return byte;
   } else if (isLayerCode(code)) {
     return getByteForLayerCode(code, basicKeyToByte);
-  } else if (advancedStringToKeycode(code, basicKeyToByte) !== null) {
+  } else if (advancedStringToKeycode(code, basicKeyToByte) !== 0) {
     return advancedStringToKeycode(code, basicKeyToByte);
   }
   throw `Could not find byte for ${code}`;
@@ -325,7 +328,7 @@ export function keycodeInMaster(
   return (
     keycode in basicKeyToByte ||
     isLayerCode(keycode) ||
-    advancedStringToKeycode(keycode, basicKeyToByte) !== null
+    advancedStringToKeycode(keycode, basicKeyToByte) !== 0
   );
 }
 
@@ -799,6 +802,8 @@ export function getKeycodes(numMacros = 16): IKeycodeMenu[] {
         },
       ],
     },
+    {id: 'modifiers', label: 'Modifiers', keycodes: modifierKeycodes},
+    {id: 'macos', label: 'macOS', keycodes: macOSKeycodes},
     {
       id: 'media',
       label: 'Media',
@@ -1112,7 +1117,15 @@ export const categoriesForKeycodeModule = (
   keycodeModule: BuiltInKeycodeModule | 'default',
 ) =>
   ({
-    default: ['basic', 'media', 'macro', 'layers', 'special'],
+    default: [
+      'basic',
+      'modifiers',
+      'macos',
+      'media',
+      'macro',
+      'layers',
+      'special',
+    ],
     [BuiltInKeycodeModule.WTLighting]: ['wt_lighting'],
     [BuiltInKeycodeModule.QMKLighting]: ['qmk_lighting'],
     [BuiltInKeycodeModule.QMKBacklightKeycodes]: ['qmk_lighting'],
@@ -1153,9 +1166,7 @@ export const getQMKLightingKeycodes = (
       ...(hasCompatibilityModule || hasExplicitBacklight
         ? qmkBacklightKeycodes
         : []),
-      ...(hasCompatibilityModule ||
-      hasExplicitRGBLight ||
-      hasExplicitRGBMatrix
+      ...(hasCompatibilityModule || hasExplicitRGBLight || hasExplicitRGBMatrix
         ? legacyRGBKeycodes
         : []),
     ];
@@ -1207,7 +1218,9 @@ export const getKeycodesForKeyboard = (
     );
   } else {
     const {keycodes} = definition;
-    includeList = keycodes.flatMap(categoriesForKeycodeModule);
+    includeList = ['default' as const, ...(keycodes || [])].flatMap(
+      categoriesForKeycodeModule,
+    );
   }
   return getKeycodes()
     .flatMap((keycodeMenu) =>
@@ -1218,7 +1231,9 @@ export const getKeycodesForKeyboard = (
         : [],
     )
     .sort((a, b) => {
-      if (a.code <= b.code) {
+      if (a.code === b.code) {
+        return 0;
+      } else if (a.code < b.code) {
         return -1;
       } else {
         return 1;

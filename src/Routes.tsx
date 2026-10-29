@@ -15,8 +15,9 @@ import {HIDConsole} from './components/panes/hid-console';
 import styled from 'styled-components';
 
 const GlobalStyle = createGlobalStyle`
-  *:focus {
-    outline: none;
+  *:focus-visible {
+    outline: 2px solid var(--ui-accent);
+    outline-offset: 3px;
   }
 `;
 
@@ -46,20 +47,20 @@ export default () => {
   const testContextState = useState({clearTestKeys: () => {}});
   return (
     <>
-        <TestContext.Provider value={testContextState}>
-          <GlobalStyle />
-          {hasHIDSupport && <UnconnectedGlobalMenu />}
-          <CanvasRouter />
+      <TestContext.Provider value={testContextState}>
+        <GlobalStyle />
+        {hasHIDSupport && <UnconnectedGlobalMenu />}
+        <CanvasRouter />
 
-          <Home hasHIDSupport={hasHIDSupport}>
-            {RouteComponents}
-            {showConsoleTab && (
-              <PersistentPane $active={location === '/console'}>
-                <HIDConsole isActive={location === '/console'} />
-              </PersistentPane>
-            )}
-          </Home>
-        </TestContext.Provider>
+        <Home hasHIDSupport={hasHIDSupport}>
+          {RouteComponents}
+          {showConsoleTab && (
+            <PersistentPane $active={location === '/console'}>
+              <HIDConsole isActive={location === '/console'} />
+            </PersistentPane>
+          )}
+        </Home>
+      </TestContext.Provider>
     </>
   );
 };

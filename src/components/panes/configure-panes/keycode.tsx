@@ -1,3 +1,8 @@
+import TextInput from '../../inputs/text-input';
+import {
+  searchKeycodes,
+  withKeycodeAliases,
+} from '../../../utils/keycode-search';
 import {FC, useState, useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 import {Button} from '../../inputs/button';
@@ -48,78 +53,121 @@ import {getNextKey} from 'src/utils/keyboard-rendering';
 import {useTranslation} from 'react-i18next';
 const KeycodeList = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, 64px);
-  grid-auto-rows: 64px;
-  justify-content: center;
-  grid-gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(min(185px, 100%), 1fr));
+  gap: 10px;
+  align-items: stretch;
 `;
-
 const MenuContainer = styled.div`
-  padding: 15px 20px 20px 10px;
-`;
-
-const Keycode = styled(Button)<{disabled: boolean}>`
-  width: 50px;
-  height: 50px;
-  line-height: 18px;
-  border-radius: 64px;
-  font-size: 14px;
-  border: 4px solid var(--border_color_icon);
-  background: var(--bg_control);
-  color: var(--color_label-highlighted);
-  margin: 0;
-  box-shadow: none;
-  position: relative;
-  border-radius: 10px;
-  &:hover {
-    border-color: var(--color_accent);
-    transform: translate3d(0, -2px, 0);
+  padding: 22px 10px;
+  &::before {
+    content: 'LIBRARY';
+    display: block;
+    padding: 0 12px 16px;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: var(--color_label);
+    font-weight: 700;
   }
-  ${(props: any) => props.disabled && `cursor:not-allowed;filter:opacity(50%);`}
 `;
-
-const KeycodeContent = styled.div`
-  text-overflow: ellipsis;
-  overflow: hidden;
-`;
-
-const CustomKeycode = styled(Button)`
-  width: 50px;
-  height: 50px;
-  line-height: 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  border: 4px solid var(--border_color_icon);
-  background: var(--color_accent);
-  border-color: var(--color_inside_accent);
-  color: var(--color_inside_accent);
-  margin: 0;
-`;
-
-const KeycodeContainer = styled.div`
-  padding: 12px;
-  padding-bottom: 30px;
-`;
-
-const KeycodeDesc = styled.div`
-  position: fixed;
-  bottom: 0;
-  background: var(--bg_control);
-  color: var(--color_label-highlighted);
-  box-sizing: border-box;
-  transition: opacity 0.4s ease-out;
-  height: 25px;
+const Keycode = styled.button<{disabled: boolean}>`
   width: 100%;
-  line-height: 14px;
-  padding: 5px;
-  font-size: 14px;
-  opacity: 1;
-  pointer-events: none;
-  &:empty {
-    opacity: 0;
+  min-width: 0;
+  min-height: 88px;
+  height: auto;
+  padding: 15px;
+  margin: 0;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 7px;
+  border: 1px solid var(--border_color_cell);
+  border-radius: 12px;
+  background: var(--ui-surface);
+  color: var(--color_label-highlighted);
+  cursor: pointer;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  &:hover:not(:disabled) {
+    background: var(--ui-raised);
+    border-color: var(--ui-accent);
+  }
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
   }
 `;
-
+const KeycodeContent = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+`;
+const KeycodeCode = styled.code`
+  font:
+    11px/1.5 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  color: var(--ui-accent);
+  overflow-wrap: anywhere;
+  white-space: normal;
+`;
+const KeycodeHint = styled.span`
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color_label);
+  overflow-wrap: anywhere;
+`;
+const CustomKeycode = styled.button`
+  padding: 12px 18px;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover {
+    filter: brightness(1.15);
+  }
+`;
+const KeycodeContainer = styled.div`
+  padding: 24px 28px 40px;
+  max-width: 1800px;
+  margin: 0 auto;
+  @media (max-width: 800px) {
+    padding: 16px;
+  }
+`;
+const LibraryHeading = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  h2 {
+    font-size: 22px;
+    font-weight: 650;
+    color: var(--color_label-highlighted);
+    letter-spacing: -0.04em;
+    margin: 0 0 6px;
+  }
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--color_label);
+  }
+`;
 const generateKeycodeCategories = (
   basicKeyToByte: Record<string, number>,
   numMacros: number = 16,
@@ -176,16 +224,25 @@ export const KeycodePane: FC = () => {
     [basicKeyToByte, macroCount, selectedDefinition, selectedDevice],
   );
 
-  // TODO: improve typing so we can get rid of this
-  if (!selectedDefinition || !selectedDevice || !matrixKeycodes) {
-    return null;
-  }
-
   const [selectedCategory, setSelectedCategory] = useState(
     KeycodeCategories[0].id,
   );
-  const [mouseOverDesc, setMouseOverDesc] = useState<string | null>(null);
   const [showKeyTextInputModal, setShowKeyTextInputModal] = useState(false);
+  const [search, setSearch] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
+  useEffect(() => {
+    dispatch(
+      searchFocused || showKeyTextInputModal
+        ? disableGlobalHotKeys()
+        : enableGlobalHotKeys(),
+    );
+    return () => {
+      dispatch(enableGlobalHotKeys());
+    };
+  }, [dispatch, searchFocused, showKeyTextInputModal]);
+  if (!selectedDefinition || !selectedDevice || !matrixKeycodes) {
+    return null;
+  }
 
   const getEnabledMenus = (): IKeycodeMenu[] => {
     if (isVIADefinitionV3(selectedDefinition)) {
@@ -233,13 +290,17 @@ export const KeycodePane: FC = () => {
   };
 
   const renderCategories = () => {
-    const {t} = useTranslation();
     return (
       <MenuContainer>
         {getEnabledMenus().map(({id, label}) => (
           <SubmenuRow
+            as="button"
+            style={{width: '100%', textAlign: 'left', fontFamily: 'inherit'}}
             $selected={id === selectedCategory}
-            onClick={() => setSelectedCategory(id)}
+            onClick={() => {
+              setSelectedCategory(id);
+              setSearch('');
+            }}
             key={id}
           >
             {t(label)}
@@ -250,8 +311,6 @@ export const KeycodePane: FC = () => {
   };
 
   const renderKeyInputModal = () => {
-    dispatch(disableGlobalHotKeys());
-
     return (
       <KeycodeModal
         defaultValue={
@@ -301,13 +360,16 @@ export const KeycodePane: FC = () => {
     const title = lutEntry?.title ?? keycode.title;
     return (
       <Keycode
+        as="button"
         key={code}
+        title={`${name} — ${code}${title ? `: ${title}` : ''}`}
+        aria-label={`${name}: ${code}`}
         disabled={!keycodeInMaster(code, basicKeyToByte) && code != 'text'}
         onClick={() => handleClick(code, index)}
-        onMouseOver={() => setMouseOverDesc(title ? `${code}: ${title}` : code)}
-        onMouseOut={() => setMouseOverDesc(null)}
       >
-        <KeycodeContent>{name}</KeycodeContent>
+        <KeycodeContent>{name || 'No action'}</KeycodeContent>
+        <KeycodeCode>{code}</KeycodeCode>
+        {title && title !== name && <KeycodeHint>{title}</KeycodeHint>}
       </Keycode>
     );
   };
@@ -315,12 +377,11 @@ export const KeycodePane: FC = () => {
   const renderCustomKeycode = () => {
     return (
       <CustomKeycode
+        as="button"
         key="customKeycode"
         onClick={() => selectedKey !== null && handleClick('text', 0)}
-        onMouseOver={() => setMouseOverDesc(t('Enter any QMK Keycode'))}
-        onMouseOut={() => setMouseOverDesc(null)}
       >
-        Any
+        + Custom keycode
       </CustomKeycode>
     );
   };
@@ -341,11 +402,7 @@ export const KeycodePane: FC = () => {
         );
       }
       case 'special': {
-        return (
-          <KeycodeList>
-            {keycodeListItems.concat(renderCustomKeycode())}
-          </KeycodeList>
-        );
+        return <KeycodeList>{keycodeListItems}</KeycodeList>;
       }
       case 'custom': {
         if (
@@ -379,14 +436,92 @@ export const KeycodePane: FC = () => {
     ({id}) => id === selectedCategory,
   )?.keycodes as IKeycode[];
 
+  const searchableKeys = withKeycodeAliases(
+    getEnabledMenus()
+      .filter((menu) => menu.id !== 'macro' || macros.isFeatureSupported)
+      .flatMap((menu) =>
+        menu.id === 'custom'
+          ? (selectedDefinition.customKeycodes || []).map((key, index) => ({
+              ...key,
+              code: `CUSTOM(${index})`,
+            }))
+          : menu.keycodes,
+      )
+      .map((key) => ({
+        ...key,
+        aliases: [
+          ...(key.aliases || []),
+          keycodeLUT?.[key.code]?.name || '',
+          keycodeLUT?.[key.code]?.title || '',
+        ],
+      })),
+    basicKeyToByte,
+  );
+  const results = searchKeycodes(searchableKeys, search);
   return (
     <>
       <SubmenuOverflowCell>{renderCategories()}</SubmenuOverflowCell>
       <OverflowCell>
         <KeycodeContainer>
-          {renderSelectedCategory(selectedCategoryKeycodes, selectedCategory)}
+          <LibraryHeading>
+            <div>
+              <h2>
+                {search.trim()
+                  ? 'Search results'
+                  : KeycodeCategories.find(
+                      (category) => category.id === selectedCategory,
+                    )?.label || 'Key library'}
+              </h2>
+              <p>
+                {selectedKey === null
+                  ? 'Select a key on your keyboard, then choose its action below.'
+                  : 'Choose an action to assign to the selected key.'}
+              </p>
+            </div>
+            {renderCustomKeycode()}
+          </LibraryHeading>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 16,
+              flexWrap: 'wrap',
+            }}
+          >
+            <TextInput
+              type="search"
+              aria-label="Search all keycodes"
+              placeholder="Search all keys: hyper, meh, cmd, brightness…"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  setSearch('');
+                }
+              }}
+              style={{flex: 1, minWidth: 160}}
+            />
+            {search && (
+              <Button as="button" onClick={() => setSearch('')}>
+                Clear
+              </Button>
+            )}
+          </div>
+          {search.trim() ? (
+            <>
+              <p role="status" style={{color: 'var(--color_label)'}}>
+                {results.length
+                  ? `${results.length} matching keys across all categories`
+                  : 'No matching keys. Try a name, alias or QMK code.'}
+              </p>
+              <KeycodeList>{results.map(renderKeycode)}</KeycodeList>
+            </>
+          ) : (
+            renderSelectedCategory(selectedCategoryKeycodes, selectedCategory)
+          )}
         </KeycodeContainer>
-        <KeycodeDesc>{mouseOverDesc}</KeycodeDesc>
         {showKeyTextInputModal && renderKeyInputModal()}
       </OverflowCell>
     </>

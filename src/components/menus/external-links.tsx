@@ -6,10 +6,12 @@ import {CategoryMenuTooltip} from '../inputs/tooltip';
 import {CategoryIconContainer} from '../panes/grid';
 
 const ExternalLinkContainer = styled.span`
-  position: absolute;
-  right: 1em;
+  position: relative;
   display: flex;
-  gap: 1em;
+  gap: 4px;
+  @media (max-width: 1000px) {
+    display: none;
+  }
 `;
 
 export const ExternalLinks = () => (

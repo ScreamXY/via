@@ -1,29 +1,19 @@
-const fs = require('fs');
-const {exec} = require('child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+const {execFileSync} = require('node:child_process');
+const {overlayDefinitions} = require('./overlay-definitions');
 
-function buildDefinitions() {
-  const args = process.argv.slice(2);
-  const shouldForceBuild = args.includes('--fresh') || args.includes('-f');
-
-  if (!shouldForceBuild && fs.existsSync('./public/definitions')) {
-    return;
-  }
-
-  console.log('Definitions re-building...');
-
-  exec('via-keyboards public/definitions', (error, stdout, stderr) => {
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    if (stderr) {
-      console.error('stderr');
-      return;
-    }
-
-    console.log(stdout);
-  });
-}
-
-buildDefinitions();
+// Always rebuild so removed local definitions cannot survive in generated output.
+const output = path.resolve('public/definitions');
+fs.rmSync(output, {recursive: true, force: true});
+execFileSync(
+  process.execPath,
+  [
+    '--import',
+    'tsx',
+    'node_modules/via-keyboards/scripts/build-all.ts',
+    output,
+  ],
+  {stdio: 'inherit'},
+);
+overlayDefinitions(path.resolve('keyboards'), output);
