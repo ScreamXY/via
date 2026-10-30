@@ -1,3 +1,4 @@
+import type {VIADefinitionV2, VIADefinitionV3} from '@the-via/reader';
 import {advancedStringToKeycode} from './advanced-keys';
 import type {IKeycode} from './key';
 
@@ -35,10 +36,13 @@ const aliases: Record<string, string[]> = {
   KC_NO: ['none', 'disabled', 'no key', 'XXXXXXX'],
 };
 
-export const normalizeSearch = (value: string) =>
+// Functions whose single argument is a layer, custom key or macro index.
+const indexFunctions = ['MO', 'DF', 'TG', 'OSL', 'TT', 'TO', 'CUSTOM', 'MACRO'];
+
+const normalizeSearch = (value: string) =>
   value
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/⌘/g, ' command ')
     .replace(/⌥/g, ' option ')
@@ -49,69 +53,83 @@ export const normalizeSearch = (value: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
+const searchNames = (item: IKeycode) => [
+  item.name,
+  item.code,
+  ...(item.aliases ?? []),
+  ...(aliases[item.code] ?? []),
+];
+
+// Codes starting with "_" are internal range markers, not keycodes.
+const isBasicKeycode = (code: string, dict: Record<string, number>) =>
+  !code.startsWith('_') && Object.hasOwn(dict, code);
+
+export const getCustomKeycodes = (
+  definition: VIADefinitionV2 | VIADefinitionV3,
+): IKeycode[] =>
+  (definition.customKeycodes ?? []).map((key, index) => ({
+    ...key,
+    code: `CUSTOM(${index})`,
+  }));
+
 export function searchKeycodes(items: IKeycode[], query: string): IKeycode[] {
   const q = normalizeSearch(query);
   const terms = q.split(' ');
-  const unique = new Map<string, IKeycode>();
-  for (const item of items) {
-    const existing = unique.get(item.code);
-    unique.set(
+  const rank = (item: IKeycode): number | null => {
+    const names = searchNames(item).map(normalizeSearch);
+    if (!q || names.includes(q)) {
+      return 0;
+    }
+    if (names.some((name) => name.startsWith(q))) {
+      return 1;
+    }
+    const fields = [...names, normalizeSearch(item.title ?? '')];
+    return terms.every((term) => fields.some((field) => field.includes(term)))
+      ? 2
+      : null;
+  };
+  // Merge duplicate codes so every category's names and titles stay searchable.
+  const unique = items.reduce((merged, item) => {
+    const existing = merged.get(item.code);
+    return merged.set(
       item.code,
       existing
         ? {
             ...existing,
             aliases: [
-              ...(existing.aliases || []),
+              ...(existing.aliases ?? []),
               item.name,
-              item.title || '',
-              ...(item.aliases || []),
+              item.title ?? '',
+              ...(item.aliases ?? []),
             ],
           }
         : item,
     );
-  }
+  }, new Map<string, IKeycode>());
   return [...unique.values()]
-    .map((item, index) => {
-      const names = [
-        item.name,
-        item.code,
-        ...(item.aliases || []),
-        ...(aliases[item.code] || []),
-      ].map(normalizeSearch);
-      const fields = [...names, normalizeSearch(item.title || '')];
-      const score = !q
-        ? 0
-        : names.includes(q)
-          ? 0
-          : names.some((n) => n.startsWith(q))
-            ? 1
-            : terms.every((term) =>
-                  fields.some((field) => field.includes(term)),
-                )
-              ? 2
-              : 100;
-      return {item, score, index};
-    })
-    .filter(({score}) => score < 100)
-    .sort((a, b) => a.score - b.score || a.index - b.index)
+    .map((item, index) => ({item, index, score: rank(item)}))
+    .filter(({score}) => score !== null)
+    .sort((a, b) => (a.score ?? 0) - (b.score ?? 0) || a.index - b.index)
     .map(({item}) => item);
 }
 
+// Adds all dictionary names with the same value, e.g. KC_ENTER for KC_ENT.
 export function withKeycodeAliases(
   items: IKeycode[],
   dict: Record<string, number>,
 ): IKeycode[] {
+  const codesByValue = Object.keys(dict)
+    .filter((code) => isBasicKeycode(code, dict))
+    .reduce(
+      (map, code) =>
+        map.set(dict[code], [...(map.get(dict[code]) ?? []), code]),
+      new Map<number, string[]>(),
+    );
   return items.map((item) => ({
     ...item,
     aliases: [
-      ...(item.aliases || []),
-      ...(aliases[item.code] || []),
-      ...Object.keys(dict).filter(
-        (code) =>
-          !code.startsWith('_') &&
-          dict[item.code] !== undefined &&
-          dict[code] === dict[item.code],
-      ),
+      ...(item.aliases ?? []),
+      ...(codesByValue.get(dict[item.code]) ?? []),
     ],
   }));
 }
@@ -123,32 +141,38 @@ export function resolveKeycodeInput(
   dict: Record<string, number>,
   items: IKeycode[],
 ): {code: string; value: number} | null {
-  let code = input.trim().toUpperCase();
-  if (!code) {
+  const typed = input.trim().toUpperCase();
+  if (!typed) {
     return null;
   }
-  if (/^0X[0-9A-F]{1,4}$/.test(code)) {
-    return {code, value: parseInt(code.slice(2), 16)};
+  if (/^0X[0-9A-F]{1,4}$/.test(typed)) {
+    return {code: typed, value: parseInt(typed.slice(2), 16)};
   }
-  if (!code.startsWith('_') && Object.hasOwn(dict, code)) {
-    return {code, value: dict[code]};
+  if (isBasicKeycode(typed, dict)) {
+    return {code: typed, value: dict[typed]};
   }
-  const exact = items.filter((item) =>
-    [
-      item.name,
-      item.code,
-      ...(item.aliases || []),
-      ...(aliases[item.code] || []),
-    ].some((name) => normalizeSearch(name) === normalizeSearch(input)),
+  const query = normalizeSearch(input);
+  const matches = new Set(
+    items
+      .filter((item) =>
+        searchNames(item).some((name) => normalizeSearch(name) === query),
+      )
+      .map((item) => item.code),
   );
-  const codes = [...new Set(exact.map((item) => item.code))];
-  if (codes.length === 1) {
-    code = codes[0];
-  }
-  if (!code.startsWith('_') && Object.hasOwn(dict, code)) {
+  const code = matches.size === 1 ? [...matches][0] : typed;
+  if (isBasicKeycode(code, dict)) {
     return {code, value: dict[code]};
   }
-  // Reject incomplete expressions and trailing input before calling VIA's parser.
+  const value = parseKeycodeExpression(code, dict);
+  return value === null ? null : {code, value};
+}
+
+// VIA's parser ignores unbalanced brackets and out-of-range arguments, so
+// check those first.
+function parseKeycodeExpression(
+  code: string,
+  dict: Record<string, number>,
+): number | null {
   if (!/^[A-Z][A-Z0-9_]*\([A-Z0-9_(),|\s]+\)$/.test(code)) {
     return null;
   }
@@ -168,10 +192,7 @@ export function resolveKeycodeInput(
     return null;
   }
   const call = /^([A-Z]+)\((.*)\)$/.exec(code);
-  if (
-    call &&
-    ['MO', 'DF', 'TG', 'OSL', 'TT', 'TO', 'CUSTOM', 'MACRO'].includes(call[1])
-  ) {
+  if (call && indexFunctions.includes(call[1])) {
     if (!/^\d+$/.test(call[2]) || Number(call[2]) > 255) {
       return null;
     }
@@ -186,15 +207,11 @@ export function resolveKeycodeInput(
     }
     if (
       call[1] !== 'LM' &&
-      (!Object.hasOwn(dict, args[1]) ||
-        dict[args[1]] > 255 ||
-        args[1].startsWith('_'))
+      (!isBasicKeycode(args[1], dict) || dict[args[1]] > 255)
     ) {
       return null;
     }
   }
   const value = advancedStringToKeycode(code, dict);
-  return Number.isInteger(value) && value > 0 && value <= 0xffff
-    ? {code, value}
-    : null;
+  return Number.isInteger(value) && value > 0 && value <= 0xffff ? value : null;
 }

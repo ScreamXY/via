@@ -1,6 +1,5 @@
 **
 !Dockerfile
-!Caddyfile
 !package.json
 !package-lock.json
 !tsconfig.json
@@ -20,4 +19,6 @@ public/definitions
 !scripts/
 !scripts/**
 !tests/
-!tests/*.test.ts
+!tests/**
+!docker/
+!docker/**

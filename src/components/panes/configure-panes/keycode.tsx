@@ -1,12 +1,8 @@
-import TextInput from '../../inputs/text-input';
-import {
-  searchKeycodes,
-  withKeycodeAliases,
-} from '../../../utils/keycode-search';
 import {FC, useState, useEffect, useMemo} from 'react';
 import styled from 'styled-components';
 import {Button} from '../../inputs/button';
 import {KeycodeModal} from '../../inputs/custom-keycode-modal';
+import TextInput from '../../inputs/text-input';
 import {title, component} from '../../icons/keyboard';
 import * as EncoderPane from './encoder';
 import {
@@ -19,6 +15,11 @@ import {
   categoriesForKeycodeModule,
   getQMKLightingKeycodes,
 } from '../../../utils/key';
+import {
+  getCustomKeycodes,
+  searchKeycodes,
+  withKeycodeAliases,
+} from '../../../utils/keycode-search';
 import {ErrorMessage} from '../../styled';
 import {
   KeycodeType,
@@ -43,7 +44,6 @@ import {
 } from 'src/store/keymapSlice';
 import {getMacroCount} from 'src/store/macrosSlice';
 import {
-  disableGlobalHotKeys,
   enableGlobalHotKeys,
   getDisableFastRemap,
   getHostKeyboardLayout,
@@ -57,6 +57,7 @@ const KeycodeList = styled.div`
   gap: 10px;
   align-items: stretch;
 `;
+
 const MenuContainer = styled.div`
   padding: 22px 10px;
   &::before {
@@ -69,7 +70,8 @@ const MenuContainer = styled.div`
     font-weight: 700;
   }
 `;
-const Keycode = styled.button<{disabled: boolean}>`
+
+const Keycode = styled.button`
   width: 100%;
   min-width: 0;
   min-height: 88px;
@@ -89,9 +91,7 @@ const Keycode = styled.button<{disabled: boolean}>`
   cursor: pointer;
   white-space: normal;
   overflow-wrap: anywhere;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s;
   &:hover:not(:disabled) {
     background: var(--ui-raised);
     border-color: var(--ui-accent);
@@ -101,6 +101,7 @@ const Keycode = styled.button<{disabled: boolean}>`
     cursor: not-allowed;
   }
 `;
+
 const KeycodeContent = styled.span`
   font-size: 14px;
   font-weight: 600;
@@ -109,22 +110,21 @@ const KeycodeContent = styled.span`
   white-space: normal;
   overflow-wrap: anywhere;
 `;
+
 const KeycodeCode = styled.code`
-  font:
-    11px/1.5 ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    monospace;
+  font: 11px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
   color: var(--ui-accent);
   overflow-wrap: anywhere;
   white-space: normal;
 `;
+
 const KeycodeHint = styled.span`
   font-size: 12px;
   line-height: 1.5;
   color: var(--color_label);
   overflow-wrap: anywhere;
 `;
+
 const CustomKeycode = styled.button`
   padding: 12px 18px;
   min-height: 44px;
@@ -139,6 +139,7 @@ const CustomKeycode = styled.button`
     filter: brightness(1.15);
   }
 `;
+
 const KeycodeContainer = styled.div`
   padding: 24px 28px 40px;
   max-width: 1800px;
@@ -147,6 +148,7 @@ const KeycodeContainer = styled.div`
     padding: 16px;
   }
 `;
+
 const LibraryHeading = styled.div`
   display: flex;
   align-items: flex-start;
@@ -168,6 +170,7 @@ const LibraryHeading = styled.div`
     color: var(--color_label);
   }
 `;
+
 const generateKeycodeCategories = (
   basicKeyToByte: Record<string, number>,
   numMacros: number = 16,
@@ -229,17 +232,8 @@ export const KeycodePane: FC = () => {
   );
   const [showKeyTextInputModal, setShowKeyTextInputModal] = useState(false);
   const [search, setSearch] = useState('');
-  const [searchFocused, setSearchFocused] = useState(false);
-  useEffect(() => {
-    dispatch(
-      searchFocused || showKeyTextInputModal
-        ? disableGlobalHotKeys()
-        : enableGlobalHotKeys(),
-    );
-    return () => {
-      dispatch(enableGlobalHotKeys());
-    };
-  }, [dispatch, searchFocused, showKeyTextInputModal]);
+
+  // TODO: improve typing so we can get rid of this
   if (!selectedDefinition || !selectedDevice || !matrixKeycodes) {
     return null;
   }
@@ -295,7 +289,7 @@ export const KeycodePane: FC = () => {
         {getEnabledMenus().map(({id, label}) => (
           <SubmenuRow
             as="button"
-            style={{width: '100%', textAlign: 'left', fontFamily: 'inherit'}}
+            style={{width: '100%', textAlign: 'left'}}
             $selected={id === selectedCategory}
             onClick={() => {
               setSelectedCategory(id);
@@ -360,7 +354,6 @@ export const KeycodePane: FC = () => {
     const title = lutEntry?.title ?? keycode.title;
     return (
       <Keycode
-        as="button"
         key={code}
         title={`${name} — ${code}${title ? `: ${title}` : ''}`}
         aria-label={`${name}: ${code}`}
@@ -377,7 +370,6 @@ export const KeycodePane: FC = () => {
   const renderCustomKeycode = () => {
     return (
       <CustomKeycode
-        as="button"
         key="customKeycode"
         onClick={() => selectedKey !== null && handleClick('text', 0)}
       >
@@ -436,28 +428,39 @@ export const KeycodePane: FC = () => {
     ({id}) => id === selectedCategory,
   )?.keycodes as IKeycode[];
 
-  const searchableKeys = withKeycodeAliases(
-    getEnabledMenus()
-      .filter((menu) => menu.id !== 'macro' || macros.isFeatureSupported)
-      .flatMap((menu) =>
-        menu.id === 'custom'
-          ? (selectedDefinition.customKeycodes || []).map((key, index) => ({
-              ...key,
-              code: `CUSTOM(${index})`,
-            }))
-          : menu.keycodes,
+  const selectedCategoryLabel =
+    KeycodeCategories.find(({id}) => id === selectedCategory)?.label ??
+    'Key library';
+
+  const searchResults = search.trim()
+    ? searchKeycodes(
+        withKeycodeAliases(
+          getEnabledMenus()
+            .filter((menu) => menu.id !== 'macro' || macros.isFeatureSupported)
+            .flatMap((menu) =>
+              menu.id === 'custom'
+                ? getCustomKeycodes(selectedDefinition)
+                : menu.keycodes,
+            )
+            .map((key) => {
+              const lutEntry = keycodeLUT?.[key.code];
+              return lutEntry
+                ? {
+                    ...key,
+                    aliases: [
+                      ...(key.aliases ?? []),
+                      lutEntry.name,
+                      ...(lutEntry.title ? [lutEntry.title] : []),
+                    ],
+                  }
+                : key;
+            }),
+          basicKeyToByte,
+        ),
+        search,
       )
-      .map((key) => ({
-        ...key,
-        aliases: [
-          ...(key.aliases || []),
-          keycodeLUT?.[key.code]?.name || '',
-          keycodeLUT?.[key.code]?.title || '',
-        ],
-      })),
-    basicKeyToByte,
-  );
-  const results = searchKeycodes(searchableKeys, search);
+    : null;
+
   return (
     <>
       <SubmenuOverflowCell>{renderCategories()}</SubmenuOverflowCell>
@@ -466,11 +469,7 @@ export const KeycodePane: FC = () => {
           <LibraryHeading>
             <div>
               <h2>
-                {search.trim()
-                  ? 'Search results'
-                  : KeycodeCategories.find(
-                      (category) => category.id === selectedCategory,
-                    )?.label || 'Key library'}
+                {searchResults ? 'Search results' : t(selectedCategoryLabel)}
               </h2>
               <p>
                 {selectedKey === null
@@ -494,8 +493,6 @@ export const KeycodePane: FC = () => {
               placeholder="Search all keys: hyper, meh, cmd, brightness…"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
               onKeyDown={(event) => {
                 if (event.key === 'Escape') {
                   setSearch('');
@@ -509,14 +506,14 @@ export const KeycodePane: FC = () => {
               </Button>
             )}
           </div>
-          {search.trim() ? (
+          {searchResults ? (
             <>
               <p role="status" style={{color: 'var(--color_label)'}}>
-                {results.length
-                  ? `${results.length} matching keys across all categories`
+                {searchResults.length
+                  ? `${searchResults.length} matching keys across all categories`
                   : 'No matching keys. Try a name, alias or QMK code.'}
               </p>
-              <KeycodeList>{results.map(renderKeycode)}</KeycodeList>
+              <KeycodeList>{searchResults.map(renderKeycode)}</KeycodeList>
             </>
           ) : (
             renderSelectedCategory(selectedCategoryKeycodes, selectedCategory)

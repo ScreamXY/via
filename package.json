@@ -1,7 +1,7 @@
 {
   "license": "GPL-3.0",
   "scripts": {
-    "dev": "npm run build:kbs && vite",
+    "dev": "node scripts/build-definitions.js && vite --force",
     "build": "npm run build:kbs && tsc && vite build",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint": "prettier --check \"src/**/*.{js,jsx,ts,tsx}\"",

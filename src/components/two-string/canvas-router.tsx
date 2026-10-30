@@ -41,7 +41,6 @@ const KeyboardBG = styled.div<{
     var(--ui-canvas) 75%
   );
   border-bottom: 1px solid var(--border_color_cell);
-
   opacity: ${(props) => (props.$visible ? 1 : 0)};
 `;
 
@@ -114,8 +113,8 @@ export const CanvasRouter = () => {
             ? !hideTerrainBG
               ? 'translateY(calc(-1 * var(--keyboard-stage-height)))'
               : !dimensions
-                ? ''
-                : `translateY(${-300 + dimensions!.height / 2}px)`
+              ? ''
+              : `translateY(${-300 + dimensions!.height / 2}px)`
             : '',
           position: hideCanvasScene && !hideTerrainBG ? 'absolute' : 'relative',
           overflow: 'visible',

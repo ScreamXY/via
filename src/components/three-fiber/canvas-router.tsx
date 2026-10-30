@@ -132,8 +132,8 @@ export const NonSuspenseCanvasRouter = () => {
             ? !hideTerrainBG
               ? 'translateY(calc(-1 * var(--keyboard-stage-height)))'
               : !dimensions
-                ? ''
-                : `translateY(${-300 + dimensions!.height / 2}px)`
+              ? ''
+              : `translateY(${-300 + dimensions!.height / 2}px)`
             : '',
           position: hideCanvasScene && !hideTerrainBG ? 'absolute' : 'relative',
           overflow: 'visible',

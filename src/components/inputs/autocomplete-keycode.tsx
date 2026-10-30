@@ -3,9 +3,7 @@ import {getAutocompleteKeycodes} from '../../utils/autocomplete-keycodes';
 import styled from 'styled-components';
 const Keycode = styled.span`
   color: var(--ui-accent);
-  font:
-    12px/1.5 ui-monospace,
-    monospace;
+  font: 12px/1.5 ui-monospace, monospace;
   flex: 0 1 42%;
   min-width: 0;
   display: flex;

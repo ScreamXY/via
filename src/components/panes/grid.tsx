@@ -186,7 +186,8 @@ export const Row = styled.div<{$selected: boolean}>`
 `;
 
 export const SubmenuRow = styled(Row)`
-  background: ${(props) => (props.$selected ? 'var(--ui-accent-soft)' : 'transparent')};
+  background: ${(props) =>
+    props.$selected ? 'var(--ui-accent-soft)' : 'transparent'};
   padding: 10px 12px;
   white-space: normal;
   overflow-wrap: anywhere;

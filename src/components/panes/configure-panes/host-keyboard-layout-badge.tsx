@@ -27,7 +27,6 @@ const LayoutTitle = styled.label`
   color: var(--color_label-highlighted);
   padding: 8px 12px;
   border: solid 1px var(--bg_control);
-
   cursor: pointer;
   transition: all 0.1s ease-out;
   white-space: nowrap;

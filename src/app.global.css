@@ -56,9 +56,10 @@ a:hover {
   --color_tinge: #c7c3c3;
   --color_tinge-light: #ebe4e4;
   --color_tinge-dark: #796c6c;
-  --box-shadow-keycap:
-    inset -1px -1px 0 rgb(0 0 0 / 20%), inset 1px 1px 0 rgb(255 255 255 / 20%);
+  --box-shadow-keycap: inset -1px -1px 0 rgb(0 0 0 / 20%),
+    inset 1px 1px 0 rgb(255 255 255 / 20%);
   --box-shadow-keyboard: var(--box-shadow-keycap);
+
 }
 
 html[data-theme-mode='dark'] {
@@ -133,10 +134,10 @@ html[data-theme-mode='light'] {
 }
 @keyframes roll {
   0% {
-    transform: translate3d(-50px, 0px, 0) rotate(-30deg);
+    transform:  translate3d(-50px, 0px, 0) rotate(-30deg);
   }
   100% {
-    transform: translate3d(50px, 0px, 0) rotate(30deg);
+    transform:   translate3d(50px, 0px, 0) rotate(30deg);
   }
 }
 @keyframes text-glow {
@@ -217,6 +218,7 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
+textarea:focus-visible,
 [tabindex]:focus-visible {
   outline: 2px solid var(--ui-accent);
   outline-offset: 3px;
@@ -235,14 +237,5 @@ select:focus-visible,
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-.workspace-nav-label {
-  font-size: 12px;
-}
-@media (max-width: 1100px) {
-  .workspace-nav-label {
-    display: none;
   }
 }

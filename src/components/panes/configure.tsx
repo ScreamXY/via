@@ -48,6 +48,25 @@ const MenuContainer = styled.div`
   padding: 20px 10px;
 `;
 
+const MenuRow = styled(Row)`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: ${(props) =>
+    props.$selected ? 'var(--ui-accent-soft)' : 'transparent'};
+`;
+
+const MenuLabel = styled.span`
+  font-size: 12px;
+  @media (max-width: 1100px) {
+    display: none;
+  }
+`;
+
 const BadgeRow = styled.div`
   position: absolute;
   top: 12px;
@@ -122,9 +141,9 @@ const filterInferredRows = (
   let removeList: typeof Rows = [];
 
   // LAYOUTS IS INFERRED, filter out if doesn't exist
-  if (!(
-    layouts.optionKeys && Object.entries(layouts.optionKeys).length !== 0
-  )) {
+  if (
+    !(layouts.optionKeys && Object.entries(layouts.optionKeys).length !== 0)
+  ) {
     removeList = [...removeList, Layouts];
   }
 
@@ -294,23 +313,9 @@ const ConfigureGrid = () => {
           <MenuContainer>
             {(KeyboardRows || []).map(
               ({Icon, Title}: {Icon: any; Title: string}, idx: number) => (
-                <Row
+                <MenuRow
                   as="button"
                   title={t(Title)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    background:
-                      selectedRow === idx
-                        ? 'var(--ui-accent-soft)'
-                        : 'transparent',
-                    border: 0,
-                    borderRadius: 10,
-                    padding: 10,
-                    width: '100%',
-                    fontFamily: 'inherit',
-                  }}
                   key={idx}
                   onClick={(_) => setRow(idx)}
                   $selected={selectedRow === idx}
@@ -319,8 +324,8 @@ const ConfigureGrid = () => {
                     <Icon />
                     <MenuTooltip>{t(Title)}</MenuTooltip>
                   </IconContainer>
-                  <span className="workspace-nav-label">{t(Title)}</span>
-                </Row>
+                  <MenuLabel>{t(Title)}</MenuLabel>
+                </MenuRow>
               ),
             )}
           </MenuContainer>

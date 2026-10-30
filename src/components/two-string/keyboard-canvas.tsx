@@ -20,6 +20,7 @@ export const KeyboardCanvas: React.FC<KeyboardCanvasProps<React.MouseEvent>> = (
     () => calculateKeyboardFrameDimensions(otherProps.keys),
     [otherProps.keys],
   );
+  // Keep the keyboard clear of the layer and badge controls at the top.
   const containerHeight = Math.max(120, containerDimensions.height - 64);
   const minPadding = 35;
   const ratio =

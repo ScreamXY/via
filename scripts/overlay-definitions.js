@@ -53,4 +53,5 @@ function overlayDefinitions(source, output) {
     JSON.stringify(hash.digest('hex')),
   );
 }
+
 module.exports = {overlayDefinitions};

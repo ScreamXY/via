@@ -29,8 +29,8 @@ const getMacroData = ({
   label && label.length > 15
     ? label
     : macroExpression && macroExpression.length
-      ? macroExpression
-      : null;
+    ? macroExpression
+    : null;
 
 const minCenterLabelFontSize = 9;
 
@@ -110,7 +110,7 @@ const paintKeycapLabel = (
     const overflows =
       context.measureText(label.centerLabel).width >
       canvasWidth - centerLabelMargin.x;
-    // Shrink long short names such as custom "EurKbd" to fit a 1u face.
+    // Shrink long legends, like the custom "EurKbd" key, to fit the face.
     const fitWidth = canvasWidth - 2 * centerLabelMargin.x;
     while (
       fontSize > minCenterLabelFontSize &&
@@ -250,8 +250,8 @@ export const Keycap: React.FC<TwoStringKeycapProps> = React.memo((props) => {
         ? KeycapState.Pressed
         : KeycapState.Unpressed
       : selected
-        ? KeycapState.Pressed
-        : KeycapState.Unpressed;
+      ? KeycapState.Pressed
+      : KeycapState.Unpressed;
   const [keycapZ] =
     pressedState === KeycapState.Pressed
       ? [zDown, rotation[2]]
@@ -265,8 +265,8 @@ export const Keycap: React.FC<TwoStringKeycapProps> = React.memo((props) => {
           : 'lightgrey'
         : 'mediumvioletred'
       : pressedState === KeycapState.Unpressed
-        ? 'lightgrey'
-        : 'lightgrey';
+      ? 'lightgrey'
+      : 'lightgrey';
   const keycapOpacity =
     pressedState === KeycapState.Unpressed ? (wasPressed ? 0.4 : 0) : 0.6;
 
@@ -275,34 +275,34 @@ export const Keycap: React.FC<TwoStringKeycapProps> = React.memo((props) => {
     return disabled
       ? [noop, noop, noop, noop]
       : props.mode === DisplayMode.ConfigureColors
-        ? [
-            noop,
-            (evt: React.MouseEvent) => {
-              if (props.onPointerOver) {
-                props.onPointerOver(evt, idx);
-              }
-            },
-            noop,
-            (evt: React.MouseEvent) => {
-              if (props.onPointerDown) {
-                props.onPointerDown(evt, idx);
-              }
-            },
-          ]
-        : [
-            (evt: React.MouseEvent) => props.onClick(evt, idx),
-            (evt: React.MouseEvent) => {
-              if (props.onPointerOver) {
-                props.onPointerOver(evt, idx);
-              }
-            },
-            noop,
-            (evt: React.MouseEvent) => {
-              if (props.onPointerDown) {
-                props.onPointerDown(evt, idx);
-              }
-            },
-          ];
+      ? [
+          noop,
+          (evt: React.MouseEvent) => {
+            if (props.onPointerOver) {
+              props.onPointerOver(evt, idx);
+            }
+          },
+          noop,
+          (evt: React.MouseEvent) => {
+            if (props.onPointerDown) {
+              props.onPointerDown(evt, idx);
+            }
+          },
+        ]
+      : [
+          (evt: React.MouseEvent) => props.onClick(evt, idx),
+          (evt: React.MouseEvent) => {
+            if (props.onPointerOver) {
+              props.onPointerOver(evt, idx);
+            }
+          },
+          noop,
+          (evt: React.MouseEvent) => {
+            if (props.onPointerDown) {
+              props.onPointerDown(evt, idx);
+            }
+          },
+        ];
   }, [
     disabled,
     props.onClick,
@@ -386,8 +386,8 @@ export const Keycap: React.FC<TwoStringKeycapProps> = React.memo((props) => {
             animation: disabled
               ? 'initial' // This prevents the hover animation from firing when the keycap can't be interacted with
               : selected
-                ? '.75s infinite alternate select-glow'
-                : '',
+              ? '.75s infinite alternate select-glow'
+              : '',
             background: getDarkenedColor(props.color.c, 0.8),
             transform: `perspective(100px) translateZ(${keycapZ}px)`,
             borderRadius: 3,
@@ -431,8 +431,7 @@ const GlowContainer = styled.div<{$selected: boolean}>`
   box-sizing: border-box;
   padding: 2px 6px 10px 6px;
   transition: transform 0.2s ease-out;
-  box-shadow:
-    inset -1px -1px 0 rgb(0 0 0 / 20%),
+  box-shadow: inset -1px -1px 0 rgb(0 0 0 / 20%),
     inset 1px 1px 0 rgb(255 255 255 / 20%);
   animation: ${(p) =>
     p.$selected ? '.75s infinite alternate select-glow' : 'initial'};

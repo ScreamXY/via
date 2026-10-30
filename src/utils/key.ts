@@ -1166,7 +1166,9 @@ export const getQMKLightingKeycodes = (
       ...(hasCompatibilityModule || hasExplicitBacklight
         ? qmkBacklightKeycodes
         : []),
-      ...(hasCompatibilityModule || hasExplicitRGBLight || hasExplicitRGBMatrix
+      ...(hasCompatibilityModule ||
+      hasExplicitRGBLight ||
+      hasExplicitRGBMatrix
         ? legacyRGBKeycodes
         : []),
     ];
@@ -1218,7 +1220,7 @@ export const getKeycodesForKeyboard = (
     );
   } else {
     const {keycodes} = definition;
-    includeList = ['default' as const, ...(keycodes || [])].flatMap(
+    includeList = ['default' as const, ...keycodes].flatMap(
       categoriesForKeycodeModule,
     );
   }
@@ -1231,9 +1233,7 @@ export const getKeycodesForKeyboard = (
         : [],
     )
     .sort((a, b) => {
-      if (a.code === b.code) {
-        return 0;
-      } else if (a.code < b.code) {
+      if (a.code <= b.code) {
         return -1;
       } else {
         return 1;

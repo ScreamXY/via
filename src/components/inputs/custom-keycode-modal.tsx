@@ -1,9 +1,4 @@
 import {useMemo, useState} from 'react';
-import {
-  searchKeycodes,
-  resolveKeycodeInput,
-  withKeycodeAliases,
-} from '../../utils/keycode-search';
 import styled from 'styled-components';
 import {AccentButton, PrimaryAccentButton} from './accent-button';
 import {AutocompleteItem} from './autocomplete-keycode';
@@ -11,6 +6,12 @@ import {anyKeycodeToString} from '../../utils/advanced-keys';
 import {useCombobox} from 'downshift';
 import TextInput from './text-input';
 import {getKeycodesForKeyboard} from '../../utils/key';
+import {
+  getCustomKeycodes,
+  searchKeycodes,
+  resolveKeycodeInput,
+  withKeycodeAliases,
+} from '../../utils/keycode-search';
 import {useAppSelector} from 'src/store/hooks';
 import {
   getBasicKeyToByte,
@@ -53,6 +54,8 @@ type KeycodeModalProps = {
   onConfirm: (keycode: number) => void;
 };
 
+const maxSuggestions = 40;
+
 // Connect component with redux here:
 export const KeycodeModal: React.FC<KeycodeModalProps> = (props) => {
   const {t} = useTranslation();
@@ -68,9 +71,7 @@ export const KeycodeModal: React.FC<KeycodeModalProps> = (props) => {
                 selectedDefinition,
                 selectedDevice.protocol,
               ),
-              ...(selectedDefinition.customKeycodes || []).map(
-                (key, index) => ({...key, code: `CUSTOM(${index})`}),
-              ),
+              ...getCustomKeycodes(selectedDefinition),
             ]
           : [],
         basicKeyToByte,
@@ -82,7 +83,7 @@ export const KeycodeModal: React.FC<KeycodeModalProps> = (props) => {
     .filter(
       (item) => resolveKeycodeInput(item.code, basicKeyToByte, []) !== null,
     )
-    .slice(0, 40)
+    .slice(0, maxSuggestions)
     .map((item) => ({
       ...item,
       label: item.title ? `${item.name} — ${item.title}` : item.name,
@@ -132,7 +133,7 @@ export const KeycodeModal: React.FC<KeycodeModalProps> = (props) => {
               {...getInputProps({'aria-label': 'Keycode, name or alias'})}
               type="text"
               placeholder="Search: hyper, meh, command, screenshot, KC_A…"
-              style={{width: '100%', boxSizing: 'border-box', marginBottom: 8}}
+              style={{width: '100%', marginBottom: 8}}
             />
           </div>
           <AutocompleteContainer
@@ -161,7 +162,9 @@ export const KeycodeModal: React.FC<KeycodeModalProps> = (props) => {
           aria-live="polite"
         >
           {resolved
-            ? `Selected: ${resolved.code} · 0x${resolved.value.toString(16).padStart(4, '0')}`
+            ? `Selected: ${resolved.code} · 0x${resolved.value
+                .toString(16)
+                .padStart(4, '0')}`
             : 'Type a name, alias, QMK expression or hex code; choose a suggestion with ↑/↓ and Enter.'}
           {query && inputItems.length === 0 && !resolved && (
             <div>No matching keycodes.</div>

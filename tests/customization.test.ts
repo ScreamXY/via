@@ -8,10 +8,17 @@ import {getBasicKeyDict} from '../src/utils/key-to-byte/dictionary-store';
 import {
   getByteForCode,
   getKeycodes,
+  getKeycodesForKeyboard,
   categoriesForKeycodeModule,
   keycodeInMaster,
 } from '../src/utils/key';
+import {
+  resolveKeycodeInput,
+  searchKeycodes,
+  withKeycodeAliases,
+} from '../src/utils/keycode-search';
 import {macOSKeycodes} from '../src/utils/macos-keycodes';
+import {modifierKeycodes} from '../src/utils/modifier-keycodes';
 const require = createRequire(import.meta.url);
 const {overlayDefinitions} = require('../scripts/overlay-definitions');
 
@@ -25,7 +32,7 @@ test('macOS category is visible for V3 default keycodes', () => {
 
 test('Mac presets encode valid firmware keycodes in every supported dictionary', () => {
   for (const protocol of [9, 10, 11, 12, 13]) {
-    const dict = getBasicKeyDict(protocol, protocol === 13 ? 0 : undefined);
+    const dict = getBasicKeyDict(protocol, 0);
     for (const key of macOSKeycodes) {
       assert.ok(keycodeInMaster(key.code, dict), key.code);
       const value = getByteForCode(key.code, dict);
@@ -42,7 +49,7 @@ test('Mac presets encode valid firmware keycodes in every supported dictionary',
   }
 });
 
-test('bundled definitions include both exact R75 IDs, layouts and encoders', () => {
+test('bundled R75 and Keychron definitions include layouts and encoders', () => {
   const index = JSON.parse(
     fs.readFileSync('public/definitions/supported_kbs.json', 'utf8'),
   );
@@ -53,7 +60,6 @@ test('bundled definitions include both exact R75 IDs, layouts and encoders', () 
     );
     assert.equal(def.vendorProductId, id);
     assert.ok(def.layouts.keys.length > 60);
-    // The wireless R75 encoder belongs to an optional layout.
     assert.match(JSON.stringify(def.layouts), /"ei":0/);
   }
 });
@@ -139,10 +145,7 @@ test('invalid or duplicate local definitions fail before modifying output', () =
   }
 });
 
-test('modifier presets encode Hyper, Meh, tap-hold and one-shot values', async () => {
-  const {modifierKeycodes} = await import('../src/utils/modifier-keycodes');
-  const {resolveKeycodeInput, searchKeycodes, withKeycodeAliases} =
-    await import('../src/utils/keycode-search');
+test('modifier presets encode Hyper, Meh, tap-hold and one-shot values', () => {
   for (const protocol of [9, 10, 11, 12, 13]) {
     const dict = getBasicKeyDict(protocol, 0);
     const items = withKeycodeAliases(
@@ -202,10 +205,9 @@ test('modifier presets encode Hyper, Meh, tap-hold and one-shot values', async (
   }
 });
 
-test('V3 Any suggestions include default keys even with only lighting modules', async () => {
-  const {getKeycodesForKeyboard} = await import('../src/utils/key');
+test('V3 Any suggestions include default keys even with only lighting modules', () => {
   const definition = JSON.parse(
-    fs.readFileSync('public/definitions/v3/875422855.json', 'utf8'),
+    fs.readFileSync(`public/definitions/v3/${0x342de487}.json`, 'utf8'),
   );
   const codes = getKeycodesForKeyboard(definition, 12).map((key) => key.code);
   for (const code of [
@@ -219,8 +221,7 @@ test('V3 Any suggestions include default keys even with only lighting modules', 
   }
 });
 
-test('search preserves aliases from duplicate keycodes', async () => {
-  const {searchKeycodes} = await import('../src/utils/keycode-search');
+test('search preserves aliases from duplicate keycodes', () => {
   const keys = [
     {name: 'F14', code: 'KC_F14'},
     {name: 'Brightness down', code: 'KC_F14', aliases: ['screen -']},
