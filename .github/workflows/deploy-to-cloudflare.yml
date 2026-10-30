@@ -7,6 +7,8 @@ on:
   workflow_dispatch:
 jobs:
   deploy:
+    # The fork ships as a GHCR image for internal-apps, not to upstream's Cloudflare Pages.
+    if: github.repository == 'the-via/app'
     runs-on: ubuntu-latest
     permissions:
       contents: read
