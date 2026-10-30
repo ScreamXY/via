@@ -1,0 +1,41 @@
+name: Keyspace CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    # Fork-only checks; upstream keeps its own PR build.
+    if: github.repository == 'ScreamXY/via'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      # The lockfile resolves via-keyboards over SSH; runners have no GitHub SSH key.
+      - run: git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
+
+      - run: npm ci
+
+      - name: Type check and build
+        run: npm run build
+
+      - name: Test
+        run: npm test
