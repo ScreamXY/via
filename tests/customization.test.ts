@@ -58,6 +58,29 @@ test('bundled definitions include both exact R75 IDs, layouts and encoders', () 
   }
 });
 
+test('bundled K630W-RGB definition maps custom keys to firmware keycodes', () => {
+  const id = 0x52440630;
+  const index = JSON.parse(
+    fs.readFileSync('public/definitions/supported_kbs.json', 'utf8'),
+  );
+  assert.ok(index.vendorProductIds.v3.includes(id));
+  const def = JSON.parse(
+    fs.readFileSync(`public/definitions/v3/${id}.json`, 'utf8'),
+  );
+  assert.equal(def.vendorProductId, id);
+  assert.equal(def.layouts.keys.length, 61);
+  // The 8051 port has no VIA lighting panel; lighting uses custom keys.
+  assert.deepEqual(def.keycodes, []);
+  // Redragon controls occupy QK_KB 0-6; K630 OS/profile keys start at 7.
+  const dict = getBasicKeyDict(12);
+  assert.equal(def.customKeycodes.length, 13);
+  assert.equal(def.customKeycodes[0].shortName, 'WinLk');
+  assert.equal(def.customKeycodes[7].shortName, 'OS Tog');
+  assert.equal(def.customKeycodes[12].shortName, 'EurKbd');
+  assert.equal(getByteForCode('CUSTOM(7)', dict), 0x7e07);
+  assert.equal(getByteForCode('CUSTOM(10)', dict), 0x7e0a);
+});
+
 test('local definitions override upstream and invalidate its cache hash', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'via-definitions-'));
   try {

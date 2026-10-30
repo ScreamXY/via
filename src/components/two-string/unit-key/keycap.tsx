@@ -32,6 +32,8 @@ const getMacroData = ({
       ? macroExpression
       : null;
 
+const minCenterLabelFontSize = 9;
+
 const paintDebugLines = (canvas: HTMLCanvasElement) => {
   const context = canvas.getContext('2d');
   if (context == null) {
@@ -102,19 +104,28 @@ const paintKeycapLabel = (
     );
   } else if (label.centerLabel) {
     let fontSize = 13 * label.size;
-    let fontHeight = 0.75 * fontSize;
     let faceMidLeftY = canvasHeight / 2;
     context.font = `bold ${fontSize}px ${fontFamily}`;
+    // return if label would have overflowed so that we know to show tooltip
+    const overflows =
+      context.measureText(label.centerLabel).width >
+      canvasWidth - centerLabelMargin.x;
+    // Shrink long short names such as custom "EurKbd" to fit a 1u face.
+    const fitWidth = canvasWidth - 2 * centerLabelMargin.x;
+    while (
+      fontSize > minCenterLabelFontSize &&
+      context.measureText(label.label).width > fitWidth
+    ) {
+      fontSize = Math.max(minCenterLabelFontSize, fontSize - 0.5);
+      context.font = `bold ${fontSize}px ${fontFamily}`;
+    }
+    let fontHeight = 0.75 * fontSize;
     context.fillText(
       label.label,
       centerLabelMargin.x,
       faceMidLeftY + 0.5 * fontHeight,
     );
-    // return if label would have overflowed so that we know to show tooltip
-    return (
-      context.measureText(label.centerLabel).width >
-      canvasWidth - centerLabelMargin.x
-    );
+    return overflows;
   } else if (typeof label.label === 'string') {
     let fontSize = 22;
     let fontHeight = 0.75 * fontSize;
