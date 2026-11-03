@@ -1021,6 +1021,18 @@ export function getKeycodes(numMacros = 16): IKeycodeMenu[] {
           shortName: 'Lpad',
           title: 'Open Launchpad (macOS)',
         },
+        {
+          name: 'Assistant',
+          code: 'KC_ASST',
+          shortName: 'Asst',
+          title: 'Launch Assistant',
+        },
+        {
+          name: 'Control Panel',
+          code: 'KC_CPNL',
+          shortName: 'CPnl',
+          title: 'Open Control Panel',
+        },
         {name: 'F13', code: 'KC_F13'},
         {name: 'F14', code: 'KC_F14'},
         {name: 'F15', code: 'KC_F15'},

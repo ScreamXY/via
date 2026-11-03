@@ -98,6 +98,23 @@ export const macOSKeycodes: IKeycode[] = [
     title: 'Launchpad (requires firmware and macOS support)',
   },
   {
+    name: 'Spotlight',
+    shortName: 'Spotlight',
+    code: 'KC_WWW_SEARCH',
+    title:
+      'Spotlight — native search key, independent of the ⌘Space shortcut (requires firmware and macOS support)',
+  },
+  {
+    name: 'Assistant',
+    code: 'KC_ASST',
+    title: 'Launch Assistant (requires firmware and macOS support)',
+  },
+  {
+    name: 'Control Panel',
+    code: 'KC_CPNL',
+    title: 'Control Panel (requires firmware and macOS support)',
+  },
+  {
     name: 'Brightness −',
     code: 'KC_BRID',
     title:
@@ -118,9 +135,11 @@ export const macOSKeycodes: IKeycode[] = [
   {name: 'Command ⌘', code: 'KC_LGUI'},
   {name: 'Option ⌥', code: 'KC_LALT'},
   {
-    name: 'Spotlight',
+    name: 'Spotlight ⌘Space',
     code: 'LGUI(KC_SPC)',
-    title: 'Spotlight — ⌘Space (macOS default)',
+    aliases: ['cmd space', 'spotlight shortcut'],
+    title:
+      'Sends ⌘Space — opens Spotlight only while that is its shortcut (macOS default)',
   },
   {
     name: 'Mission Control ⌃↑',

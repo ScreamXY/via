@@ -44,9 +44,11 @@ To add a keyboard, copy its definition into `keyboards/v3/` (or `keyboards/v2/` 
 
 ## macOS keys
 
-The **macOS** category has native Mission Control and Launchpad keys, screen brightness, media keys, Command and Option. It also has shortcut presets: Spotlight, App Exposé, desktop switching, screenshots, Lock Screen, Force Quit, emoji, app switching, full screen, hide, minimize, close, quit, find, save, and word and line navigation.
+The **macOS** category has native Mission Control, Launchpad, Spotlight, Assistant and Control Panel keys, screen brightness, media keys, Eject, Command and Option. It also has shortcut presets: Spotlight (⌘Space), App Exposé, desktop switching, screenshots, Lock Screen, Force Quit, emoji, app switching, full screen, hide, minimize, close, quit, find, save, and word and line navigation.
 
-Native keys only work if the keyboard firmware and macOS support them. Shortcut presets use the default macOS shortcuts, so they change if you change them in System Settings or an app. Mission Control also has a Control-Up preset. A key in this UI does not add features to the firmware.
+Native keys only work if the keyboard firmware and macOS support them. Shortcut presets use the default macOS shortcuts, so they change if you change them in System Settings or an app. Spotlight and Mission Control each have a native key and a shortcut preset. The native **Spotlight** key (`KC_WWW_SEARCH`) does not depend on the Spotlight shortcut. **Spotlight ⌘Space** only opens Spotlight while ⌘Space is its shortcut. Mission Control's preset is Control-Up. A key in this UI does not add features to the firmware.
+
+Assistant (`KC_ASST`) and Control Panel (`KC_CPNL`) need VIA protocol 11 or later. Older firmware uses those values for other keys, so the app disables them there.
 
 **Brightness − (F14)** and **Brightness + (F15)** work on the owner's Mac. The standard brightness keys (`KC_BRID`, `KC_BRIU`) are still in the list, but they did not work there; the cause is not known.
 

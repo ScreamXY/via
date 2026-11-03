@@ -7,7 +7,9 @@ import {createRequire} from 'node:module';
 import {getBasicKeyDict} from '../src/utils/key-to-byte/dictionary-store';
 import {
   getByteForCode,
+  getByteToKey,
   getKeycodes,
+  getLabelForByte,
   getKeycodesForKeyboard,
   categoriesForKeycodeModule,
   keycodeInMaster,
@@ -30,10 +32,18 @@ test('macOS category is visible for V3 default keycodes', () => {
   );
 });
 
+// Protocol 10 and older use the legacy QMK keycodes, where 0xC0-0xDF are
+// KC_FN0-KC_FN31, so these keys only exist from protocol 11.
+const modernMacKeys = new Set(['KC_CPNL', 'KC_ASST']);
+
 test('Mac presets encode valid firmware keycodes in every supported dictionary', () => {
   for (const protocol of [9, 10, 11, 12, 13]) {
     const dict = getBasicKeyDict(protocol, 0);
     for (const key of macOSKeycodes) {
+      if (protocol <= 10 && modernMacKeys.has(key.code)) {
+        assert.equal(keycodeInMaster(key.code, dict), false, key.code);
+        continue;
+      }
       assert.ok(keycodeInMaster(key.code, dict), key.code);
       const value = getByteForCode(key.code, dict);
       assert.ok(
@@ -43,6 +53,8 @@ test('Mac presets encode valid firmware keycodes in every supported dictionary',
     }
     assert.equal(getByteForCode('KC_MCTL', dict), 0xc1);
     assert.equal(getByteForCode('KC_LPAD', dict), 0xc2);
+    assert.equal(getByteForCode('KC_WWW_SEARCH', dict), 0xb4);
+    assert.equal(getByteForCode('KC_EJCT', dict), 0xb0);
     assert.equal(getByteForCode('LGUI(KC_SPC)', dict), 0x082c);
     assert.equal(getByteForCode('LGUI(LSFT(KC_4))', dict), 0x0a21);
     assert.equal(getByteForCode('LCTL(LGUI(KC_Q))', dict), 0x0914);
@@ -203,6 +215,49 @@ test('modifier presets encode Hyper, Meh, tap-hold and one-shot values', () => {
       0x0a21,
     );
   }
+});
+
+test('native Mac keys encode and resolve by their QMK names', () => {
+  for (const protocol of [11, 12, 13]) {
+    const dict = getBasicKeyDict(protocol, 0);
+    assert.equal(getByteForCode('KC_CPNL', dict), 0xbf);
+    assert.equal(getByteForCode('KC_ASST', dict), 0xc0);
+    const items = withKeycodeAliases(
+      getKeycodes().flatMap((c) => c.keycodes),
+      dict,
+    );
+    for (const [input, value] of [
+      ['KC_WSCH', 0xb4],
+      ['spotlight', 0xb4],
+      ['KC_ASSISTANT', 0xc0],
+      ['KC_CONTROL_PANEL', 0xbf],
+      ['KC_MEDIA_EJECT', 0xb0],
+      ['KC_MISSION_CONTROL', 0xc1],
+      ['KC_LAUNCHPAD', 0xc2],
+    ] as const) {
+      assert.equal(
+        resolveKeycodeInput(input, dict, items)?.value,
+        value,
+        input,
+      );
+    }
+  }
+});
+
+test('Spotlight has a native key and a separate ⌘Space shortcut', () => {
+  const dict = getBasicKeyDict(12);
+  const items = withKeycodeAliases(
+    getKeycodes().flatMap((c) => c.keycodes),
+    dict,
+  );
+  const results = searchKeycodes(items, 'spotlight').map((k) => k.code);
+  assert.equal(results[0], 'KC_WWW_SEARCH');
+  assert.ok(results.includes('LGUI(KC_SPC)'));
+  assert.equal(searchKeycodes(items, 'cmd space')[0]?.code, 'LGUI(KC_SPC)');
+  assert.equal(
+    getLabelForByte(0xb4, 100, dict, getByteToKey(dict)),
+    'Spotlight',
+  );
 });
 
 test('V3 Any suggestions include default keys even with only lighting modules', () => {
