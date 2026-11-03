@@ -18,7 +18,7 @@ Serve `dist/` at the root of the site. VIA loads its definitions from absolute p
 
 ## Internal hosting
 
-`make publish` builds and tests the committed source in Docker. It then pushes amd64 and arm64 images to `ghcr.io/screamxy/via` with the tags `latest` and the short commit hash. Docker uses the existing GHCR credential helper.
+`make publish` builds and tests the committed source in Docker. It then pushes amd64 and arm64 images to `ghcr.io/screamxy/via` with the tags `latest` and the short commit hash. Run it after you log Docker in to GHCR with package write access (`docker login ghcr.io -u ScreamXY`, classic token with `write:packages`).
 
 The image serves the static app with Caddy on port 8080 as UID 1000. Client routes return the app; missing files and definitions return 404. The server does not need access to any keyboard.
 
